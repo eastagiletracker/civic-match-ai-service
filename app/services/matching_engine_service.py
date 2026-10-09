@@ -486,7 +486,7 @@ class MatchingEngineService:
         Logic:
         - Top 3 candidates with match_percentage > 0 get "TOP"
         - Other candidates with match_percentage > 0 get "OTHER"
-        - Candidates with match_percentage = 0 get "UNMATCH" (already assigned)
+        - Candidates with match_percentage = 0 get "UNMATCH"
         """
         # Separate matches with calculated scores from 0% matches
         calculated_matches = [m for m in matches if m.match_percentage > 0]
@@ -502,9 +502,12 @@ class MatchingEngineService:
             match.match_category = "OTHER"
             self.logger.debug(f"Assigned OTHER to candidate {match.candidate_id} with {match.match_percentage}% match")
 
-        # UNMATCH is already assigned to zero matches in _create_zero_match_result
+        # Assign UNMATCH to all 0% matches. Ineligible candidates already carry it from
+        # _create_zero_match_result, but eligible candidates whose calculated match is 0%
+        # still have the "PENDING" placeholder from _convert_to_legacy_format.
         for match in zero_matches:
-            self.logger.debug(f"Candidate {match.candidate_id} already assigned UNMATCH (0% match)")
+            match.match_category = "UNMATCH"
+            self.logger.debug(f"Assigned UNMATCH to candidate {match.candidate_id} (0% match)")
 
         # Log the categorization summary
         top_count = len([m for m in matches if m.match_category == "TOP"])
